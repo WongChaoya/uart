@@ -4,10 +4,12 @@
 // Author : CharlesWong
 // Date	 : 2020/04/19
 // Module : rxd_module
-// Version: 1.0
-//
+// Version: 1.0 |    Date       |   Content
+//          1.1 |   20231113    |   将接收端修改成115200bps,且不可变更波特率，避免命令接收失败
 ///////////////////////////////////////////////////
-module rxd_module(
+module rxd_module#(
+    parameter SYS_FREQ    =  50_000_000//默认主频50M 
+)(
 input clk,//50Mhz
 input rst_n,//async reset active-low
 input uart_rxd,//uart receive
@@ -16,20 +18,29 @@ output rxd_done,
 output [7:0]data_rxd
 );
 
+localparam CLK_DIV_CNT  =   (SYS_FREQ >> 13) / 225;
+reg [31:0] clk_div_cnt_r;
 reg [7:0]baud_cnt_r;
 reg bit_flag_r;
 reg rxd_start_flag_r;
 reg  baud_clk_r;
 reg uart_rxd_temp1,uart_rxd_temp2;
 wire rxd_start;
-//产生16x baud时钟(25M/16 = 1652500bps)
+//产生16x baud时钟
 always @(posedge clk or negedge rst_n) begin
-	if(!rst_n)begin
-	  	baud_clk_r <= 0; 
-	end
-	else begin
-		baud_clk_r <= ~baud_clk_r;	
-	end
+    if(!rst_n) begin
+        clk_div_cnt_r <= 0;
+        baud_clk_r    <= 0;
+    end
+    else begin
+        if (clk_div_cnt_r   ==  CLK_DIV_CNT -1) begin
+            clk_div_cnt_r   <=  0;
+            baud_clk_r <= ~baud_clk_r;	
+        end 
+        else begin
+            clk_div_cnt_r   <=  clk_div_cnt_r   +   1;
+        end
+    end
 end
 //起始位检测
 always @(posedge clk or negedge rst_n) begin

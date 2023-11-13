@@ -21,7 +21,7 @@ reg txd_start_flag_r;
 reg [3:0]bit_cnt_r;
 reg [7:0]baud_cnt_r;
 reg  baud_clk_r;
-//产生16x baud时钟(25M/16 = 1652500bps)
+//产生16x baud时钟
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n)begin
 	  	baud_clk_r <= 0; 
